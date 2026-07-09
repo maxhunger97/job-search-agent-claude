@@ -30,6 +30,16 @@ search_locations:
   - "berlin"
   - "germany"
 
+# Optional: name the job boards/sources you know dominate your market, so
+# /scrape checks these specifically instead of relying only on whatever a
+# general web search happens to surface. Order = priority. Leave empty to
+# let /scrape decide based on general search results alone.
+preferred_sources:
+  - "linkedin"
+  - "indeed"
+  - "stepstone"
+  - "company_watchlist"
+
 company_watchlist:
   - name: "Windkraft Nord"
     careers_url: "https://example.com/careers"

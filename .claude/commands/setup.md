@@ -4,7 +4,7 @@ description: Guided onboarding — parse your CV, configure job search + scoring
 
 # /setup
 
-You are onboarding a new user onto this job-search agent. The engine (`engine/scorer.py`, `engine/cv_generator.py`) is generic and already validated — it works for any field or city as long as `config.yaml` and `cv_system/cv_data.yaml` describe this specific person. Your job in this command is to produce those two files, plus one or more `cv_system/config_<variant>.yaml` files, through a short guided interview. Do not skip steps or silently invent defaults for things the person hasn't told you — ask.
+You are onboarding a new user onto this job-search agent. The engine (`engine/scorer.py`, `engine/cv_generator.py`) is generic and already validated — it works for any field, city, or language as long as `config.yaml` and `cv_system/cv_data.yaml` describe this specific person. Your job in this command is to produce those two files, plus one or more `cv_system/config_<variant>.yaml` files, through a short guided interview. Do not skip steps or silently invent defaults for things the person hasn't told you — ask.
 
 If `config.yaml` or `cv_system/cv_data.yaml` already exist and look filled in (not the fictional Alex Berger example), ask whether the person wants to redo setup from scratch or just adjust specific parts, rather than overwriting silently.
 
@@ -29,6 +29,7 @@ Ask the person to paste their CV as text, or point you at a file (PDF/DOCX/plain
    - a `skills.<variant>` list (skills reordered/framed for that audience — same underlying skills, different emphasis and category labels)
 5. Ask for a one-line "About Me" pattern per variant, using this proven template structure (fill in their own words): *"I am a [degree/background] with a focus on [X]. In [most relevant experience] I [did Y]. I am motivated to [Z] and bring [strength]."* Store the format-string version (with `{company}` and `{role_area}` placeholders) as `summary_templates.<variant>` in `cv_data.yaml`. Also ask for a short targeting suffix template (`summary_targeting_suffix`, with a `{title}` placeholder) — default to: `" Currently targeting {title} positions where relevant experience adds direct value."`
 6. Derive `role_area_signals`: 3-5 keyword groups (from their experience/projects) that map job-title language to a short "role area" phrase used inside the summary (e.g. keywords `["esg","carbon"]` -> label `"ESG and carbon reporting"`). Set a sensible `role_area_default`.
+7. Ask what language(s) the CV/CL should actually be written in. If their target market is bilingual (e.g. German/English), ask which language each CV variant and the cover letter should default to — don't assume English.
 
 ### Checkup — CV & CV variants
 
@@ -36,7 +37,7 @@ Show, plainly:
 
 - Every experience/education/project entry you parsed, so the person can catch a transcription error immediately (dates, titles, company names).
 - The full `skill_signals` table (job-posting phrase -> label) in full — this is literally the allow-list of everything the agent will ever be permitted to claim on their behalf, so it needs to be seen in full, not summarized.
-- For each CV variant created: its name, subtitle, section order, and specifically *how it differs* from the other variants (which skills got reordered or reframed, not just "different skills") — the person should be able to tell at a glance why variant A isn't just a copy of variant B.
+- For each CV variant created: its name, subtitle, section order, language, and specifically *how it differs* from the other variants (which skills got reordered or reframed, not just "different skills") — the person should be able to tell at a glance why variant A isn't just a copy of variant B.
 - The filled-in summary template for each variant, with a placeholder company plugged in, so they can hear how it will actually read once generated for a real job.
 
 ---
@@ -46,26 +47,28 @@ Show, plainly:
 This is the part of the original agent's design that made the biggest difference: **broad recall, then filter** — cast a wide net with adjacent/related job titles rather than narrow exact-match search terms, and rely on the disqualification rules (not the search terms) to cut noise. Guide the person through this methodology explicitly; don't just ask "what job titles do you want" and stop there.
 
 1. **Search profiles.** Ask what role(s) they're searching for. For each, help them brainstorm not just the exact title but 3-5 adjacent titles/phrasings recruiters actually use (e.g. "ESG Consultant" -> also "Sustainability Consultant", "Carbon Accounting Analyst", "Climate Risk Consultant"). Write these to `search_profiles.<name>.terms`, with a `weight` (0.8-1.0, higher for their primary target) and `cv_config` pointing at the matching variant from Phase 1.
-2. **Locations.** Ask for their target city/region, and whether they're open to remote/hybrid or nearby secondary cities. Write `search_locations`.
-3. **Company watchlist.** Ask if there are specific companies they already want to track (competitors' postings, dream employers, companies from their network/LinkedIn). If they mention LinkedIn (follows, saved companies, connections at specific employers), ask them to name the companies explicitly rather than inferring a list yourself — you have no way to read their actual LinkedIn activity, so never present a company as "from your LinkedIn" unless they told you its name. Write `company_watchlist` (name, careers_url if known, location, priority) and `linkedin_follows`, and keep track of which entries came from an explicit company name vs. which came from a "companies like X" style answer, so the checkup below can show the distinction honestly.
-4. **Domain context keywords.** Ask: "What 5-10 words would basically always appear in a job posting that's genuinely in your field?" These rescue borderline postings and gate ambiguous profiles later. Write `scoring.domain_context_keywords`.
-5. **Disqualifiers.** Explain the pattern: hard title rules (seniority/role-type that's never right, e.g. "Director", "PhD"), hard text rules (skills fundamentally incompatible with their profile, e.g. unrelated engineering disciplines), and soft text rules (adjacent-but-wrong roles that get a pass if the posting has enough domain context — e.g. "Data Engineer" inside a company that's clearly in their target field). Ask what should sit in each bucket for them. Also ask about a maximum years-of-experience ceiling (`overexperience.hard_years` / `soft_years`) if they're early-career.
-6. **Role profiles.** For each search profile from step 1, build `scoring.role_profiles.<name>` with `strong`/`medium`/`weak` keyword tiers (their target skills, weighted by how defining they are), a `weight`, and if the profile risks false positives from an adjacent field, a `domain_gate` (ask which adjacent field could get confused with theirs, e.g. "climate policy" vs "generic public policy") and/or `penalty_terms` (specific competitor terms that should suppress the score, e.g. IT consulting terms suppressing a "consultant" match that isn't about their field). Ask for a one-sentence `why_reason` per profile for cover-letter use later ("what makes {company}'s work in this space interesting to you").
-7. **Location tiers, seniority tiers, industry keywords.** These follow directly from steps 2 and 4 — build them without re-asking, but show the result in the checkup.
-8. **Company preferences.** Ask if there are employer types they want a tie-breaking nudge toward or away from (e.g. startups over Big 4, or vice versa). Write `company_preferences`.
-9. Use the proven default weights and thresholds unless the person has a reason to change them: `weights: {location: 0.27, role_fit: 0.33, seniority: 0.25, industry: 0.15}`, `min_score: 42`, `disqualify_cap: 22.0`, `senior_cap: 38.0`.
+2. **Preferred sources.** Ask which job boards actually dominate their market — this varies a lot by country and field (LinkedIn everywhere, but Indeed/StepStone/national boards vary). Write the answer to `preferred_sources`, in priority order. This isn't cosmetic: `/scrape` checks these sources specifically before falling back to general search, so a vague or empty answer here means `/scrape` is guessing at where to look.
+3. **Locations.** Ask for their target city/region, and whether they're open to remote/hybrid or nearby secondary cities. Write `search_locations`.
+4. **Company watchlist.** Ask if there are specific companies they already want to track (competitors' postings, dream employers, companies from their network/LinkedIn). If they mention LinkedIn (follows, saved companies, connections at specific employers), ask them to name the companies explicitly rather than inferring a list yourself — you have no way to read their actual LinkedIn activity, so never present a company as "from your LinkedIn" unless they told you its name. Write `company_watchlist` (name, careers_url if known, location, priority) and `linkedin_follows`, and keep track of which entries came from an explicit company name vs. which came from a "companies like X" style answer, so the checkup below can show the distinction honestly.
+5. **Language.** Ask what language(s) job postings actually appear in for their target roles/locations — a Berlin ESG role might be posted in German, English, or both; a Zurich MedTech role often mixes both in the same posting. Whatever they say, build `domain_context_keywords`, `disqualify` patterns, `role_profiles` keyword tiers, and `search_profiles.<name>.terms` in EVERY language they named, not just one — a posting only in German will silently fail every English-only keyword rule, and that failure is invisible unless you check for it (put it in the checkup below).
+6. **Domain context keywords.** Ask: "What 5-10 words would basically always appear in a job posting that's genuinely in your field?" (in each language from step 5). These rescue borderline postings and gate ambiguous profiles later. Write `scoring.domain_context_keywords`.
+7. **Disqualifiers.** Explain the pattern: hard title rules (seniority/role-type that's never right, e.g. "Director", "PhD"), hard text rules (skills fundamentally incompatible with their profile, e.g. unrelated engineering disciplines), and soft text rules (adjacent-but-wrong roles that get a pass if the posting has enough domain context — e.g. "Data Engineer" inside a company that's clearly in their target field). Ask what should sit in each bucket for them, in each language from step 5. Also ask about a maximum years-of-experience ceiling (`overexperience.hard_years` / `soft_years`) if they're early-career.
+8. **Role profiles.** For each search profile from step 1, build `scoring.role_profiles.<name>` with `strong`/`medium`/`weak` keyword tiers (their target skills, weighted by how defining they are), a `weight`, and if the profile risks false positives from an adjacent field, a `domain_gate` (ask which adjacent field could get confused with theirs, e.g. "climate policy" vs "generic public policy") and/or `penalty_terms` (specific competitor terms that should suppress the score, e.g. IT consulting terms suppressing a "consultant" match that isn't about their field). Ask for a one-sentence `why_reason` per profile for cover-letter use later ("what makes {company}'s work in this space interesting to you").
+9. **Location tiers, seniority tiers, industry keywords.** These follow directly from steps 3 and 6 — build them without re-asking, but show the result in the checkup.
+10. **Company preferences.** Ask if there are employer types they want a tie-breaking nudge toward or away from (e.g. startups over Big 4, or vice versa). Write `company_preferences`.
+11. Use the proven default weights and thresholds unless the person has a reason to change them: `weights: {location: 0.27, role_fit: 0.33, seniority: 0.25, industry: 0.15}`, `min_score: 42`, `disqualify_cap: 22.0`, `senior_cap: 38.0`.
 
 ### Checkup — how the search will actually run
 
-- Restate every `search_profiles.<name>` with its full term list, and spell out that `/scrape` will combine every term with every configured location — show 2-3 concrete example combined queries verbatim (e.g. `"climate policy officer" Berlin`), not just the raw lists.
-- State explicitly which sources `/scrape` checks: general web search across whatever job boards/aggregators/company sites turn up for those queries (not a fixed hardcoded portal — briefly note this is deliberate, because portal-specific scrapers break whenever a site changes its markup), plus each `company_watchlist` entry's `careers_url` directly.
+- Restate every `search_profiles.<name>` with its full term list (in every configured language), and spell out that `/scrape` will combine every term with every configured location — show 2-3 concrete example combined queries verbatim (e.g. `"climate policy officer" Berlin`, or the German equivalent if that language was configured), not just the raw lists.
+- State `preferred_sources` explicitly and what it means in practice: "`/scrape` will check LinkedIn and Indeed directly first, then StepStone, then your watchlist companies, then fall back to general search" — not just repeat the list back.
 - List the `company_watchlist` entries, and for each one say plainly whether it came from a company the person named directly, or from a broader instruction (e.g. "companies like X") — never claim a company was pulled "from LinkedIn" unless they gave you that exact name.
 
 ### Checkup — how the score will be composed
 
 - Show the literal scoring formula with their actual configured weights filled in, e.g.: `total = location×0.27 + role_fit×0.33 + seniority×0.25 + industry×0.15` (×100).
-- For each role profile, list its strong/medium/weak keywords and weight, and say in one sentence what would make a posting score highest vs. lowest on role_fit for that profile.
-- List every disqualification rule in plain language, not regex — "titles containing 'Director' are always rejected", "postings requiring 6+ years are rejected", "'Data Engineer' postings are filtered out unless the posting also mentions at least 2 of your domain context words".
+- For each role profile, list its strong/medium/weak keywords (noting which language each is in, if more than one) and weight, and say in one sentence what would make a posting score highest vs. lowest on role_fit for that profile.
+- List every disqualification rule in plain language, not regex — "titles containing 'Director' or 'Leiter' are always rejected", "postings requiring 6+ years are rejected", "'Data Engineer'/'Data Engineerin' postings are filtered out unless the posting also mentions at least 2 of your domain context words".
 - State the `min_score` threshold in plain terms ("postings scoring below 42/100 won't show up at all") and what `disqualify_cap`/`senior_cap` mean in practice ("a disqualified posting is still visible up to score 22, in case you want to double-check a rule was too aggressive, but it will never rank above a real match").
 
 Write all of this into `config.yaml`.
@@ -86,7 +89,7 @@ Explain to the person: the cover letter's HTML shell and structure are fixed (ho
 3. Ask for a generic fallback "why this company" line and a generic fallback hook, for jobs that don't match any specific story well.
 4. Ask if they want a personal-note closing line (hobbies, personal connection to the field) — this is optional; leave `personal_passage` empty if they'd rather not include one.
 5. Ask for an accent color for both CV and cover letter (`accent_color` / `cl_accent_color`), or default to `#2C3E50`.
-6. Confirm the default writing-quality filter (banned AI-sounding phrases like "passionate about", "leverage my", "dynamic environment"; em/en dashes flagged as separators) — ask if they want to add anything to `banned_phrases`.
+6. Confirm the default writing-quality filter (banned AI-sounding phrases like "passionate about", "leverage my", "dynamic environment"; em/en dashes flagged as separators) — ask if they want to add anything to `banned_phrases`, in whichever language(s) the letter will be written in.
 
 ### Checkup — cover letter behavior
 
@@ -106,7 +109,7 @@ Run a smoke test before declaring setup done:
 python3 engine/cli.py score --input templates/smoke_test_jobs.json --output /tmp/smoke_scored.json
 ```
 
-If `templates/smoke_test_jobs.json` doesn't exist, write 3-4 synthetic job postings by hand (one clearly on-target, one clearly disqualified by seniority, one clearly wrong-domain) using their own field/location, run scoring, and sanity-check the results with them: does the on-target job score highest, does the disqualified one get filtered? Then generate one CV + cover letter for the top result and show it to them.
+If `templates/smoke_test_jobs.json` doesn't exist, write 3-4 synthetic job postings by hand (one clearly on-target, one clearly disqualified by seniority, one clearly wrong-domain) using their own field/location/language, run scoring, and sanity-check the results with them: does the on-target job score highest, does the disqualified one get filtered? Then generate one CV + cover letter for the top result and show it to them.
 
 ### Checkup — validation
 
@@ -117,8 +120,8 @@ If `templates/smoke_test_jobs.json` doesn't exist, write 3-4 synthetic job posti
 
 Write `CUSTOMIZATION_REPORT.md` at the repo root. This should consolidate the checkups above into one persistent reference document (not be written fresh from scratch) covering:
 
-- What CV variants you created and why (the role-type split from Phase 1)
-- The search profiles, locations, and watchlist companies configured, and how `/scrape` will actually query for them
+- What CV variants you created and why (the role-type split from Phase 1), and which language each one is written in
+- The search profiles, preferred sources, locations, and watchlist companies configured, and how `/scrape` will actually query for them
 - Every disqualification/domain-gate/penalty rule you set up and the reasoning behind it
 - The scoring weights and thresholds used (and whether they're the proven defaults or customized)
 - What cover letter stories were captured and which job-signal patterns trigger each one
