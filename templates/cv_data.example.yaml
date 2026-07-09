@@ -1,0 +1,253 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# EXAMPLE cv_data.yaml — a fully fictional persona ("Alex Berger", sustainability
+# / ESG consulting, Berlin) used to prove this template works for a field and
+# city completely unlike the one it was originally built for. None of this is
+# real. /setup will build YOUR version of this file from your own uploaded CV
+# plus a short cover-letter interview — you shouldn't need to hand-edit this,
+# it's here so you (or Claude) can see a fully-populated example.
+# ═══════════════════════════════════════════════════════════════════════════
+
+personal:
+  name: Alex Berger
+  title: MSc Sustainability & Environmental Management
+  email: alex.berger.example@example.com
+  phone: "+49 30 0000 0000"
+  linkedin: linkedin.com/in/alexberger-example
+  nationality: German
+  photo: ""   # leave empty to omit photo from the CV
+
+education:
+  - degree: MSc Sustainability & Environmental Management
+    institution: Technical University Berlin
+    period: "2022 – 2024"
+    grade: "1.3 (German scale)"
+  - degree: BSc Environmental Engineering
+    institution: University of Hamburg
+    period: "2018 – 2022"
+
+experience:
+  - title: Junior ESG Analyst
+    company: Berlin Climate Consulting GmbH
+    period: "11/2024 – present"
+    description: >
+      Support corporate carbon accounting and ESG reporting mandates for mid-cap clients.
+      Build emissions inventories, benchmark against CSRD requirements, and prepare
+      client-facing sustainability reports.
+  - title: Sustainability Intern
+    company: Windkraft Nord AG
+    period: "04/2024 – 10/2024"
+    description: >
+      Supported site-selection analysis for onshore wind projects, including community
+      stakeholder consultations and environmental impact pre-assessments.
+    compact: true
+  - title: Student Assistant
+    company: Chair of Environmental Policy, TU Berlin
+    period: "2022 – 2024"
+    description: >
+      Assisted with literature review and data collection for EU climate policy research.
+    compact: true
+
+projects:
+  - title: "Corporate Carbon Accounting Under CSRD: A Comparative Framework"
+    context: "Master Thesis | TU Berlin | 02/2024 – 08/2024"
+    description: >
+      Built a comparative framework for Scope 1-3 emissions accounting across three
+      German mid-cap manufacturers, identifying reporting gaps against incoming CSRD
+      requirements. Grade: 1.3.
+  - title: "Onshore Wind Siting and Community Acceptance"
+    context: "Internship Project | Windkraft Nord AG | 2024"
+    description: >
+      Analysed siting criteria and community feedback for two onshore wind projects,
+      producing a stakeholder acceptance framework adopted for subsequent site reviews.
+
+skills:
+  consulting:
+    - category: Sustainability & ESG Analysis
+      keywords: Carbon accounting, ESG reporting, CSRD, materiality assessment, benchmarking
+    - category: Stakeholder & Project Management
+      keywords: Client reporting, stakeholder consultation, project coordination
+    - category: Data & Technology
+      keywords: Excel, Python (basic), data visualization
+    - category: Communication
+      keywords: Report writing, client presentations
+  policy:
+    - category: Policy & Regulatory
+      keywords: EU climate policy, CSRD, emissions regulation, environmental impact assessment
+    - category: Sustainability & ESG Analysis
+      keywords: Carbon accounting, ESG reporting, materiality assessment
+    - category: Communication
+      keywords: Policy briefs, report writing, stakeholder consultation
+
+languages:
+  - language: German
+    level: Native
+  - language: English
+    level: C1
+  - language: French
+    level: B1
+
+references:
+  - name: "Dr. Example Supervisor"
+    email: "supervisor@example.com"
+    role: "Chair of Environmental Policy, TU Berlin"
+
+interests: Cycling, urban gardening, climate policy podcasts
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CV VARIANT ROUTING — which config_*.yaml file to use per search profile.
+# /setup creates one CV variant per job-search profile you configure.
+# ═══════════════════════════════════════════════════════════════════════════
+profile_config_map:
+  consulting: "config_consulting.yaml"
+  policy: "config_policy.yaml"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SUMMARY TEMPLATES — the "About Me" pattern: "I am a [X] with a focus on [Y].
+# In [Z] I [did W]. I am motivated to [...] and bring [...]." One per variant,
+# with {company} and {role_area} filled in per job.
+# ═══════════════════════════════════════════════════════════════════════════
+summary_templates:
+  consulting: >
+    Sustainability & Environmental Management graduate from TU Berlin with hands-on
+    experience in ESG reporting, carbon accounting, and client-facing sustainability
+    consulting. Motivated to bring that foundation to {company}'s work in {role_area}.
+  policy:  >
+    Sustainability & Environmental Management graduate from TU Berlin with a research
+    and policy background in EU climate regulation and corporate emissions reporting.
+    Interested in contributing to {company}'s work in {role_area}.
+
+summary_targeting_suffix: " Currently targeting {title} positions where analytical rigor and climate-policy fluency add direct value."
+
+role_area_signals:
+  - keywords: ["esg", "carbon", "emissions", "csrd", "reporting"]
+    label: "ESG and carbon reporting"
+  - keywords: ["policy", "regulation", "eu climate"]
+    label: "climate policy"
+  - keywords: ["renewable", "wind", "solar", "energy"]
+    label: "renewable energy"
+role_area_default: "sustainability and environmental management"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ATS KEYWORD MATCHING — only ever surfaces labels tied to skills this person
+# actually listed above. (signal_in_job_text, label_to_highlight)
+# ═══════════════════════════════════════════════════════════════════════════
+skill_signals:
+  - ["csrd", "CSRD"]
+  - ["carbon accounting", "carbon accounting"]
+  - ["esg reporting", "ESG reporting"]
+  - ["materiality", "materiality assessment"]
+  - ["stakeholder consultation", "stakeholder consultation"]
+  - ["climate policy", "EU climate policy"]
+  - ["environmental impact", "environmental impact assessment"]
+
+skill_category_signals:
+  policy: ["Policy", "Regulatory"]
+  data: ["Data", "Technology"]
+  esg: ["Sustainability", "ESG"]
+  communication: ["Communication"]
+
+# ═══════════════════════════════════════════════════════════════════════════
+# EXPERIENCE CATALOG — cover-letter building blocks, gathered by the CL
+# interview in /setup. Each entry: signal keywords (strong/medium/weak) for
+# matching against a job posting, a "hook" opening line, and primary/secondary
+# paragraph lengths. `type: background` vs `type: current` controls narrative
+# ordering (background experience introduces, current role shows application).
+# ═══════════════════════════════════════════════════════════════════════════
+experience_catalog:
+  thesis_csrd:
+    type: background
+    signals:
+      strong: ["csrd", "carbon accounting", "emissions", "scope 1", "scope 2", "scope 3"]
+      medium: ["reporting", "sustainability", "framework", "comparative"]
+      weak: ["analysis", "research"]
+    hook: >
+      My master's thesis built a comparative carbon accounting framework across three
+      manufacturers ahead of CSRD requirements, which is close to exactly what the {title}
+      role at {company} is asking for.
+    primary: >
+      My thesis at TU Berlin built a comparative Scope 1-3 emissions accounting framework
+      across three German mid-cap manufacturers, identifying where their reporting fell
+      short of incoming CSRD requirements. Graded 1.3. The hardest part was not the
+      accounting itself but making the framework usable by companies with very different
+      data maturity, which shaped how I think about ESG reporting work generally.
+    secondary: >
+      My thesis built a comparative carbon accounting framework across three manufacturers
+      ahead of CSRD requirements, graded 1.3, and shaped how I approach ESG reporting work.
+  windkraft_siting:
+    type: background
+    signals:
+      strong: ["wind", "renewable", "siting", "community", "stakeholder consultation"]
+      medium: ["energy", "environmental impact", "project"]
+      weak: ["analysis", "assessment"]
+    hook: >
+      Working on onshore wind siting taught me that the technical case for a project
+      rarely survives contact with the community around it, which is exactly the kind of
+      problem the {title} role at {company} deals with.
+    primary: >
+      During my internship at Windkraft Nord I worked on siting analysis for two onshore
+      wind projects, including community stakeholder consultations and environmental
+      impact pre-assessments. The stakeholder acceptance framework I built was adopted
+      for later site reviews. It taught me that technical feasibility and community buy-in
+      are two different problems that both have to get solved.
+    secondary: >
+      During my internship at Windkraft Nord I built a stakeholder acceptance framework
+      for onshore wind siting that was adopted for later project reviews.
+  berlin_climate_consulting:
+    type: current
+    signals:
+      strong: ["esg", "consulting", "client", "advisory", "reporting"]
+      medium: ["carbon", "benchmarking", "materiality"]
+      weak: ["sustainability", "analysis"]
+    hook: >
+      Right now I build ESG reports and carbon inventories for consulting clients at
+      Berlin Climate Consulting, which is directly the kind of work the {title} role at
+      {company} needs.
+    primary: >
+      At Berlin Climate Consulting I support corporate carbon accounting and ESG
+      reporting mandates for mid-cap clients: building emissions inventories, benchmarking
+      against CSRD requirements, and preparing client-facing sustainability reports. What
+      I have learned is that most clients do not need more data, they need someone to
+      turn the data they already have into something decision-ready.
+    secondary: >
+      At Berlin Climate Consulting I build emissions inventories and ESG reports for
+      mid-cap clients, translating raw sustainability data into decision-ready reporting.
+
+generic_hook_template: >
+  What draws me to the {title} role at {company} is the chance to apply an ESG and
+  climate-policy background directly, in a setting where the reporting actually changes
+  what a company does next.
+
+# ═══════════════════════════════════════════════════════════════════════════
+# COMPANY-TYPE REASONING for cover letters — specific enthusiasm for certain
+# employer types. Falls back to role_profiles' `why_reason` (config.yaml) if
+# no group matches.
+# ═══════════════════════════════════════════════════════════════════════════
+company_type_reasons:
+  - matches: ["windkraft", "solar", "renewable", "energy ag"]
+    reason: >
+      {company} sits right at the point where the energy transition stops being a policy
+      goal and becomes an actual construction project with actual neighbors. That
+      transition from paper to ground is exactly what I want to keep working on.
+  - matches: ["ministry", "bundesministerium", "commission", "european union"]
+    reason: >
+      Regulation is what actually moves corporate behavior at scale, more reliably than
+      any individual company's voluntary commitments. Working at {company} would mean
+      being on the side of that lever rather than reacting to it.
+
+generic_why_company_template: >
+  What drew me to {company} is the work itself and the domain it sits in. I am at a
+  point where I want to commit to a specific direction, and this role fits it well.
+
+personal_passage: >
+  On a personal note: outside of work I spend a lot of time cycling and keeping an
+  allotment garden in Berlin, which is a fairly literal way of staying connected to
+  why this field matters to me in the first place.
+
+cl_accent_color: "#2C6E49"
+
+banned_phrases:
+  - "motivated to contribute"
+  - "passionate about"
+  - "leverage my"
+  - "dynamic environment"
+  - "synergy"

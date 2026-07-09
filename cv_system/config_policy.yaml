@@ -1,0 +1,16 @@
+variant: policy
+subtitle: MSc Sustainability & Environmental Management | Climate Policy
+
+section_order:
+  - summary
+  - experience
+  - projects
+  - skills
+  - education
+  - languages
+
+experience_limit: 6
+project_style: outcome
+show_photo: false
+show_references: true
+accent_color: "#2C6E49"

@@ -1,0 +1,16 @@
+variant: consulting
+subtitle: MSc Sustainability & Environmental Management | ESG & Strategy
+
+section_order:
+  - summary
+  - skills
+  - experience
+  - projects
+  - education
+  - languages
+
+experience_limit: 6
+project_style: outcome
+show_photo: false
+show_references: true
+accent_color: "#2C6E49"

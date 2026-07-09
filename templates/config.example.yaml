@@ -1,0 +1,185 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# EXAMPLE config.yaml — a fully worked, non-trivial example (not an empty
+# skeleton), so you can see how job-search rules translate into this schema.
+# This describes a fully fictional persona ("Alex Berger", ESG/climate-policy,
+# Berlin — see templates/cv_data.example.yaml) in a field and city unlike
+# whatever the engine was first built for, specifically to prove the schema
+# and scoring logic generalize. /setup will generate YOUR OWN version of this
+# file by interview — you should not need to hand-edit this, but it's here so
+# you (or Claude) can see what "fully configured" looks like.
+# ═══════════════════════════════════════════════════════════════════════════
+
+search_profiles:
+  consulting:
+    weight: 0.9
+    terms:
+      - "ESG consultant"
+      - "sustainability consultant"
+      - "carbon accounting"
+      - "climate risk consultant"
+    cv_config: "config_consulting.yaml"
+  policy:
+    weight: 0.85
+    terms:
+      - "climate policy officer"
+      - "environmental policy analyst"
+      - "renewable energy policy"
+    cv_config: "config_policy.yaml"
+
+search_locations:
+  - "berlin"
+  - "germany"
+
+company_watchlist:
+  - name: "Windkraft Nord"
+    careers_url: "https://example.com/careers"
+    location: "Berlin"
+    priority: high
+
+linkedin_follows:
+  - "Windkraft Nord"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SCORING — this is the section the generic engine (engine/scorer.py) reads.
+# Nothing in engine/scorer.py knows about sustainability, ESG, Berlin, or MSc
+# degrees — all of that lives here, specific to the fictional person /setup
+# would have interviewed.
+# ═══════════════════════════════════════════════════════════════════════════
+scoring:
+  domain_context_keywords:
+    - sustainability
+    - esg
+    - climate
+    - renewable
+    - carbon
+    - emissions
+    - environmental
+    - csrd
+    - decarbonization
+
+  disqualify:
+    title_hard:
+      - '\bsenior\b'
+      - '\bhead\s+of\b'
+      - '\bdirector\b'
+      - '\bvice\s+president\b'
+    title_out_of_scope:
+      - '\bconstruction\s+site\s+manager\b'
+      - '\belectrician\b'
+    text_hard:
+      - '\bsap\s*(abap|consultant)\b'
+      - '\bfirmware\s*(engineer|developer)\b'
+    text_soft:
+      - '\bdata\s*engineer\b'
+      - '\bnetwork\s*engineer\b'
+
+  overexperience:
+    hard_years: 6
+    soft_years: 4
+
+  location_tiers:
+    top:
+      keywords: ["berlin"]
+      score: 1.0
+      label: "Berlin"
+    good:
+      keywords: ["potsdam", "brandenburg"]
+      score: 0.85
+      label: "Berlin Umgebung"
+    acceptable:
+      keywords: ["hamburg", "munich", "münchen", "cologne", "köln"]
+      score: 0.70
+      label: "Andere DE"
+    remote:
+      keywords: ["remote", "homeoffice", "hybrid"]
+      score: 0.80
+      label: "Remote/Hybrid"
+    low:
+      keywords: ["switzerland", "austria", "london"]
+      score: 0.40
+      label: "Fernlage"
+  location_default_score: 0.55
+  location_default_label: "Unbekannt"
+
+  role_profiles:
+    consulting:
+      weight: 0.95
+      strong: ["esg", "sustainability consultant", "carbon accounting", "csrd", "climate risk"]
+      medium: ["client", "advisory", "reporting", "benchmarking"]
+      weak: ["analytical", "structured"]
+      why_reason: >
+        {company} operates on the kind of ESG problems that require both regulatory
+        fluency and the ability to turn that into something a client can act on.
+    policy:
+      weight: 0.85
+      strong: ["climate policy", "environmental policy", "renewable energy policy", "eu climate"]
+      medium: ["regulation", "policy analysis", "stakeholder"]
+      weak: ["environmental", "sustainability"]
+      domain_gate:
+        activate_above: 0.15
+        min_context: 1
+        zero_context_score: 0.12
+        partial_context_score_multiplier: 0.5
+      why_reason: >
+        Regulation is what actually moves corporate behavior at scale. Working at
+        {company} means being on the side of that lever rather than reacting to it.
+
+  seniority_tiers:
+    trainee:
+      patterns: ['\bjunior\b', '\bentry.level\b', '\btrainee\b', '\bgraduate\b', '\bassociate\b']
+      score: 1.0
+    intern:
+      patterns: ['\bintern(ship)?\b', '\bpraktikum\b']
+      score: 0.87
+    neutral:
+      patterns: ['\banalyst\b', '\bconsultant\b', '\bmanager\b']
+      score: 0.70
+    bad:
+      patterns: ['\bsenior\b', '\blead\b', '\bdirector\b', '\bhead of\b']
+      score: 0.20
+  seniority_default_score: 0.65
+  seniority_default_label: "unknown"
+
+  industry_keywords:
+    - ["esg", 1.0]
+    - ["sustainability", 0.95]
+    - ["carbon accounting", 1.0]
+    - ["renewable energy", 0.9]
+    - ["climate policy", 0.9]
+    - ["environmental consulting", 0.85]
+  industry_default_score: 0.4
+  industry_default_label: "other"
+
+  target_companies:
+    - "windkraft nord"
+
+  academic_companies:
+    - "tu berlin"
+  academic_company_score_cap: 0.75
+
+  company_preferences:
+    prefer: ["windkraft nord"]
+    prefer_bonus: 3.0
+    avoid: []
+    avoid_penalty: 0.0
+
+  weights:
+    location: 0.27
+    role_fit: 0.33
+    seniority: 0.25
+    industry: 0.15
+
+  min_score: 42
+  disqualify_cap: 22.0
+  senior_cap: 38.0
+  senior_title_patterns:
+    - '\bmanager\b'
+    - '\bdirector\b'
+    - '\blead(er)?\b'
+
+output:
+  max_jobs_per_run: 30
+  top_jobs_for_cv: 15
+  report_path: "output/job_report.html"
+  data_path: "data/job_leads.json"
+  cv_output_dir: "output/cv"

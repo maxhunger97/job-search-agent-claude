@@ -1,0 +1,38 @@
+[
+  {
+    "id": "smoke_1",
+    "title": "Junior ESG Consultant",
+    "company": "GreenLine Advisory",
+    "location": "Berlin",
+    "description": "You will support corporate carbon accounting and CSRD reporting mandates for clients. Entry level role, ideal for a recent graduate with a sustainability or ESG background.",
+    "url": "https://example.com/smoke_1",
+    "source": "smoke_test"
+  },
+  {
+    "id": "smoke_2",
+    "title": "Senior ESG Director",
+    "company": "BigCorp Consulting",
+    "location": "Berlin",
+    "description": "Lead a team of 10+ consultants on ESG strategy. Minimum 8 years experience required.",
+    "url": "https://example.com/smoke_2",
+    "source": "smoke_test"
+  },
+  {
+    "id": "smoke_3",
+    "title": "SAP ABAP Consultant",
+    "company": "TechFirm GmbH",
+    "location": "Berlin",
+    "description": "Looking for an SAP ABAP consultant with 5+ years experience in enterprise systems.",
+    "url": "https://example.com/smoke_3",
+    "source": "smoke_test"
+  },
+  {
+    "id": "smoke_4",
+    "title": "Climate Policy Analyst",
+    "company": "Windkraft Nord",
+    "location": "Berlin",
+    "description": "Support EU climate policy analysis and renewable energy regulation work. Graduate role, 0-2 years experience welcome.",
+    "url": "https://example.com/smoke_4",
+    "source": "smoke_test"
+  }
+]
