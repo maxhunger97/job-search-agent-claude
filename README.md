@@ -178,5 +178,4 @@ open `http://localhost:5555`, take a screenshot (macOS: Cmd+Shift+4), and save i
 - **`python3 engine/server.py` fails with `ModuleNotFoundError`.** Run `pip install -r requirements.txt` first — the server needs Flask, which the scoring/generation engine alone doesn't.
 
 ## Acknowledgements
-
-Structural inspiration (the `/setup` → `/scrape` → `/apply` command shape, and the idea of a plain-language customization record) from [MadsLorentzen/ai-job-search](https://github.com/MadsLorentzen/ai-job-search). Built with [Claude Code](https://claude.com/claude-code).
+Built with [Claude Code](https://claude.com/claude-code).
