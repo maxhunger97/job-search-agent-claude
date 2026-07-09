@@ -19,7 +19,8 @@ An earlier version of this agent used site-specific scrapers (fixed CSS selector
 5. For every posting found, collect: `id` (stable — hash of URL is fine), `title`, `company`, `location`, `description` (as much of the actual posting text as you can get — the scorer and CV/CL generator both need real text, not just a title), `url`, `source` (which portal/search this came from — keep this, it's what the checkup below reports on).
 6. Deduplicate by URL/id before writing.
 7. Write the full list to `data/job_leads_raw.json` as a JSON array of flat objects (see `engine/cli.py` docstring for the exact schema).
-8. Run:
+8. If any `preferred_sources` entry or watchlist company couldn't actually be checked (site blocked automated access, search returned nothing usable, careers page required a login, etc.), write those as plain-language strings to `data/scrape_warnings.json`, e.g. `["linkedin.com blocked automated search this run — check manually for <profile> roles in <location>"]`. The local review server (`python3 engine/server.py`) reads this file and shows it as a banner, so a source that silently failed doesn't just disappear from view.
+9. Run:
    ```
    python3 engine/cli.py score
    ```
@@ -30,9 +31,10 @@ An earlier version of this agent used site-specific scrapers (fixed CSS selector
 Don't just report the top results — show the mechanism so the person can tell the difference between "no good jobs exist right now" and "the search or scoring missed something":
 
 - Every query actually run, grouped by source (which `preferred_sources` entries you checked directly, plus general search, plus each watchlist company), with a raw result count per query.
+- Any sources that couldn't be checked, and confirm you wrote them to `data/scrape_warnings.json`.
 - Total raw postings found, how many were removed as duplicates, and how many remained in `data/job_leads_raw.json`.
 - How many of those passed `min_score` into `data/job_leads.json`, and how many were filtered out by a disqualification rule (name which rule, when it's a large chunk — e.g. "12 rejected for seniority, 4 for wrong domain").
 - The top 5-10 by score with their `profile_match`.
 - If very few or zero postings passed: say so plainly and suggest a concrete next step (loosen a specific disqualifier, add adjacent search terms, check whether postings in this market are actually in a different language than your keywords, or lower `min_score`) rather than treating a quiet run as a success to move past.
 
-Do not generate CVs or cover letters in this command — that's `/apply`.
+Do not generate CVs or cover letters in this command — that's `/apply`. To review, dismiss, or mark postings applied interactively instead of just reading this checkup, run `python3 engine/server.py` and open `http://localhost:5555`.

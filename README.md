@@ -29,30 +29,34 @@ Every phase of `/setup` ends with a **Checkup** — a plain-language readout of 
 
 ## What it looks like
 
-**Job report** (`output/job_report.html`, opened directly in your browser after `/apply`):
+`python3 engine/server.py` opens an interactive dashboard at `http://localhost:5555` — filter by profile, search by title/company/location, slide the minimum score, and act on each posting directly (View Job, Regenerate, Cover Letter, CV, Mark Applied, Mark seen):
 
-![Job report screenshot](docs/screenshots/job_report.png)
+![Local dashboard screenshot](docs/screenshots/localhost_dashboard.png)
 
-**Generated CV** (one of several variants, keyword-tailored per posting):
-
-![Generated CV screenshot](docs/screenshots/generated_cv.png)
-
-*(Screenshots not committed yet — see "Generating the screenshots yourself" below.)*
-
-One honest scope note: this ships a **static** report you open as a file, not the interactive local server (reject/apply/generate buttons, live-reload) that the original personal agent used. If you want that, just tell Claude during `/setup` or afterward — "build me a small local server for reviewing and rejecting jobs" — it's a natural extension of `engine/cli.py`, just not something every user needs on day one.
+`engine/cli.py report` also builds a plain static `output/job_report.html` — no server needed, just a file you can open, print, or send to someone else. It doesn't have the interactive buttons; use the server for actually working through your leads day to day.
 
 ## Quick start
 
-1. Clone this repo and open it in Claude Code.
-2. Run `/setup`. You'll be asked to paste or upload your CV, answer questions about the roles/locations/languages/companies/portals you're targeting, and give Claude 2-4 real stories to draw from for cover letters. After every phase, Claude shows you a **Checkup** of exactly what it configured, so you can correct anything before moving on. This produces:
+1. Clone this repo, `pip install -r requirements.txt`, and open the folder in Claude Code.
+2. Run `/setup`. If you already have a list of jobs you've applied to (even an informal one), it'll ask for that first and use it to calibrate the rest of the interview instead of starting from a blank guess. Then you'll paste or upload your CV, answer questions about the roles/locations/languages/companies/portals you're targeting, and give Claude 2-4 real stories to draw from for cover letters. After every phase, Claude shows you a **Checkup** of exactly what it configured, so you can correct anything before moving on. This produces:
    - `cv_system/cv_data.yaml` — your CV content, ATS keyword allow-list, and cover-letter building blocks
    - `cv_system/config_<variant>.yaml` — one file per CV "flavor" you want
    - `config.yaml` — your job search terms, preferred sources, locations, watchlist companies, and every scoring/disqualification rule
    - `CUSTOMIZATION_REPORT.md` — a plain-language summary of everything that got configured and why
 3. Run `/scrape` whenever you want fresh postings. It checks your `preferred_sources` first, then general search, scores everything against your rules, and reports exactly which queries ran and why postings were kept or filtered.
 4. Run `/apply` to generate a CV + cover letter for your top-ranked, not-yet-applied postings, and build `output/job_report.html`.
+5. Run `python3 engine/server.py` and open `http://localhost:5555` to work through your leads day to day — filter, search, regenerate a single CV/CL, and mark postings Applied or seen without hand-editing JSON.
 
 You can also just describe changes in plain language at any time — "stop showing me anything with 'Manager' in the title" or "add a fourth cover letter story about X" — and Claude will edit the underlying config directly, no need to re-run `/setup`.
+
+## Reviewing & archiving jobs
+
+The server has two dismissal actions that look similar but mean different things, and the distinction matters:
+
+- **Mark seen** sets `rejected: true` on that posting in `data/job_leads.json`. It disappears from the dashboard immediately and stays hidden on future `/scrape` runs (the merge step in `engine/cli.py score` preserves this flag by matching on `id`). Use this for "not for me" — postings you looked at and don't want to see again, but never applied to.
+- **Mark Applied** sets `applied: true` on the same record *and* appends a copy of it (title, company, score, date, notes, CV/CL paths, URL) to `data/applications_archive.json`. The posting stays visible on the dashboard (with a green "Applied" badge) rather than disappearing, and shows up on `/archive` — the point is to keep a running record of what you've actually sent out, not to hide it.
+
+Why a local JSON file rather than syncing to Notion, Airtable, or a spreadsheet the way the original personal version of this agent did: that original sync only worked because the person already had a Notion database and API token configured — it's real setup cost that has nothing to do with whether the agent itself works. A local file needs zero setup and works identically for everyone who clones this repo. It also already has every field a sync target would need, so if you do use Notion/Airtable/Sheets, the honest move is to just ask Claude directly — "add a step to `/api/apply` in `engine/server.py` that also pushes this record to my Notion database at `<url>`" — rather than this template guessing at your setup and getting it wrong.
 
 ## How CV tailoring actually works (and why it's safe to run unattended)
 
@@ -72,15 +76,25 @@ Sustainability & ESG Analysis: Carbon accounting, ESG reporting, CSRD, materiali
 
 That's the entire mechanism (`engine/cv_generator.py: extract_keywords` + `generate_cv_for_job`). It will **never** add a skill label that isn't already in your own `skill_signals` — there's no LLM call in this path, no chance of it inferring you know something you didn't tell it. The same mechanism swaps in the right variant, reorders skills, and fills your summary template with the job's company name and detected "role area." Zero fabrication risk, which is what makes it safe to run against 20+ postings in a batch without reviewing each one before it goes out.
 
-## How cover letters actually work (and why they need a real interview)
+## How cover letters actually work — and exactly why some parts change per job and others never do
 
-A cover letter can't be assembled from an allow-list the way a CV can — it needs an actual voice. So the letter's **HTML shell and structure are fixed** (hook → evidence paragraph(s) → why-this-company → optional personal note → closing), but the **content inside each section comes from stories you tell Claude during `/setup` Phase 3**, stored in `experience_catalog`.
+A cover letter has three tiers of content, not two, and each tier is treated differently on purpose:
 
-Each story has trigger keywords and a `background`/`current` tag. For a "Junior ESG Consultant" posting, the fictional Alex Berger config (shipped as the worked example — see `templates/cv_data.example.yaml`) produces:
+**1. Structurally fixed, identical in every letter you ever generate:** the HTML shell/CSS, the greeting ("Dear Hiring Team,"), the closing ask ("I would love the chance to meet..."), and the signature block. This is deliberate, not laziness — there is no legitimate per-job reason for your greeting or signature to differ, so varying them would add zero signal for the reader while adding a real cost for you: N letters that each need re-proofreading for structural drift, instead of one shell you check carefully once and then trust completely. If you ever catch yourself wanting to change this per job ("make the closing warmer for startups"), that's a sign you want a second CV variant's tone, not a per-job cover letter edit.
+
+**2. Fixed content that's still personal — `personal_passage`.** This is the one part of the letter that's static text, unchanged across every job, and that's also deliberate: a personal note ("I spend my weekends cycling and gardening") is either true about you or it isn't. There's no honest version of that sentence that's different for job A than job B. Making it vary per posting would mean inventing a different personal story to match each employer, which is fabrication with better production values, not personalization. It stays constant because that's the only way it stays true — or you can leave it empty, which is equally legitimate.
+
+**3. Actually dynamic per job — the hook, the evidence paragraph(s), and the "why this company" line.** These change because there's a real, job-specific question to answer each time: *which of your real experiences is actually most relevant to this posting, and what genuinely differentiates this employer from the last one?* Both questions have different correct answers for different postings, so the content that answers them has to change too. This is where `experience_catalog` (gathered once, during `/setup` Phase 3) does its work: each story has trigger keywords and a `background`/`current` tag, and the posting's own text decides which story or story-pair actually leads.
+
+For a "Junior ESG Consultant" posting, the fictional Alex Berger config (shipped as the worked example — see `templates/cv_data.example.yaml`) produces:
 
 > *My master's thesis built a comparative carbon accounting framework across three manufacturers ahead of CSRD requirements, which is close to exactly what the Junior ESG Consultant role at GreenLine Advisory is asking for.* [...] *At Berlin Climate Consulting I build emissions inventories and ESG reports for mid-cap clients, translating raw sustainability data into decision-ready reporting.*
 
-Two stories, ordered because one is tagged `background` (the thesis) and the other `current` (the present job) — background introduces the narrative, current shows where it applies today. Change the job posting's keywords and a different story pair leads. A generic writing-quality filter also runs on every letter (banned AI-sounding phrases, em/en-dash-as-separator detection) and flags anything worth a manual look.
+Two stories, ordered because one is tagged `background` (the thesis) and the other `current` (the present job) — background introduces the narrative, current shows where it applies today. A different posting's keywords surface a different story or a different pair, in a different order.
+
+**What breaks if you move the boundary either direction.** Make tier 1 dynamic too, and you've traded a battle-tested template for N inconsistent ones with no upside — no employer benefits from a slightly different sign-off. Make tier 3 static instead (one evidence paragraph reused everywhere), and you get a letter that's accurate but reads as obviously mass-produced, which defeats the actual point of writing a cover letter at all: showing you read the posting and thought about fit. The rule of thumb underneath all three tiers: content varies per job only when there's a real, job-specific question behind it — otherwise varying it is just risk with no signal.
+
+A generic writing-quality filter also runs on every letter (banned AI-sounding phrases, em/en-dash-as-separator detection) and flags anything worth a manual look.
 
 ## Customization tips (read this before your first `/setup` run)
 
@@ -106,6 +120,7 @@ These aren't arbitrary defaults — each one exists because of something that br
 ```
 config.yaml                 # YOUR search + scoring config (created by /setup, gitignored)
 CUSTOMIZATION_REPORT.md     # YOUR plain-language record of what got configured and why (created by /setup, gitignored)
+requirements.txt            # PyYAML, Jinja2, Flask
 cv_system/
   cv_data.yaml               # YOUR CV content + cover-letter data (created by /setup, gitignored)
   config_*.yaml               # YOUR CV variant configs (created by /setup, gitignored)
@@ -114,15 +129,20 @@ engine/
   scorer.py                   # generic scoring engine — reads config.yaml, no hardcoded field/city/language rules
   cv_generator.py              # generic CV + cover-letter generator — reads cv_data.yaml + config.yaml
   cli.py                      # `python3 engine/cli.py score|generate|report` — used by /scrape and /apply
+  server.py                   # `python3 engine/server.py` — interactive local dashboard, used day to day
 templates/
   config.example.yaml          # documented reference config, fictional "Alex Berger" persona
   cv_data.example.yaml         # documented reference CV data, same fictional persona
   smoke_test_jobs.json         # synthetic postings used to validate a fresh /setup run
 docs/
-  screenshots/                 # report + CV screenshots referenced above (see below to generate your own)
+  screenshots/                 # the one dashboard screenshot referenced above (see below to generate your own)
 .claude/commands/
   setup.md / scrape.md / apply.md   # the three slash commands, including the Checkup instructions
-data/, output/                # generated at runtime (gitignored)
+data/
+  job_leads.json               # scored postings (gitignored)
+  applications_archive.json    # jobs marked Applied, with notes + doc links (gitignored)
+  scrape_warnings.json         # sources /scrape couldn't check this run, shown as a dashboard banner (gitignored)
+output/                       # generated CVs/CLs + the static report (gitignored)
 ```
 
 Two files ship pre-filled rather than gitignored, as worked examples of the variant-config schema: `cv_system/config_consulting.yaml` and `cv_system/config_policy.yaml`. They belong to the same fictional persona as `templates/*.example.yaml` — `/setup` creates your own `cv_system/config_<variant>.yaml` files alongside (or instead of) them.
@@ -140,21 +160,22 @@ You don't have to use `/setup` — if you'd rather hand-edit:
 
 Re-run just the search/scoring interview without touching your CV or cover letter by asking Claude directly, e.g. "let's redo Phase 2 of setup, my priorities changed."
 
-## Generating the screenshots yourself
+## Generating the dashboard screenshot yourself
 
-The screenshots referenced above aren't committed (they'd need to show a real generated report, and this repo ships without one so a fresh clone starts clean). To generate your own after running `/setup` and `/apply` once:
+The one above is from a real run. If you'd rather show your own (or the layout has changed since), regenerate it after running `/setup` and `/apply` once:
 
 ```
-open output/job_report.html
+python3 engine/server.py
 ```
 
-take a screenshot (macOS: Cmd+Shift+4), save it as `docs/screenshots/job_report.png`, then do the same for one file in `output/cv/` as `docs/screenshots/generated_cv.png`.
+open `http://localhost:5555`, take a screenshot (macOS: Cmd+Shift+4), and save it as `docs/screenshots/localhost_dashboard.png` — that's the exact path the image link above points at.
 
 ## Troubleshooting
 
 - **`/scrape` finds almost nothing.** Check the Scrape Checkup output for the disqualification breakdown — if most postings are being rejected by one rule, that rule is probably too aggressive. Also check whether postings in your market are in a language your `domain_context_keywords`/search terms don't cover.
 - **Generated cover letters feel repetitive.** You likely only gave `/setup` one or two `experience_catalog` stories with broad trigger keywords, so the same one fires for everything. Ask Claude to add more stories with narrower, more specific trigger keywords.
 - **A CV keeps claiming a skill you don't have.** This should be structurally impossible (`extract_keywords` only reads from your own `skill_signals`) — if it happens, it means something got added to `skill_signals` that shouldn't have been; ask Claude to remove that specific signal pair.
+- **`python3 engine/server.py` fails with `ModuleNotFoundError`.** Run `pip install -r requirements.txt` first — the server needs Flask, which the scoring/generation engine alone doesn't.
 
 ## Acknowledgements
 

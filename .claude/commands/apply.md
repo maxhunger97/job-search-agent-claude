@@ -18,8 +18,9 @@ Read `data/job_leads.json`. If it doesn't exist or is empty, tell the person to 
    ```
    python3 engine/cli.py report
    ```
-   This builds `output/job_report.html` — a sortable table of every scored job with links to its CV/CL and the original posting.
-4. Spot-check at least one generated cover letter yourself before telling the person it's ready: confirm it reads like a real paragraph (not a template with unfilled placeholders), doesn't repeat the same experience story twice, and doesn't trip the banned-phrase/dash warnings that `cv_generator.py` logs to the console during generation. If warnings were printed, mention them and offer to hand-fix that specific letter.
+   This builds `output/job_report.html` — a static, shareable/printable table of every scored job with links to its CV/CL and the original posting. Good for a quick read or sending to someone else; not interactive.
+4. Mention `python3 engine/server.py` (open `http://localhost:5555`) as the interactive alternative: filter/search/sort the same data live, regenerate a single CV/CL on demand (with a spot to paste a manually-copied job description if the scraped one was thin), and use **Mark Applied** / **Mark seen** buttons instead of hand-editing `data/job_leads.json`. Marking a job Applied there also adds it to `data/applications_archive.json` — see the README's "Reviewing & archiving jobs" section for why that's a local file by default rather than a Notion/Sheets sync.
+5. Spot-check at least one generated cover letter yourself before telling the person it's ready: confirm it reads like a real paragraph (not a template with unfilled placeholders), doesn't repeat the same experience story twice, and doesn't trip the banned-phrase/dash warnings that `cv_generator.py` logs to the console during generation. If warnings were printed, mention them and offer to hand-fix that specific letter.
 
 ## Generation Checkup (always show this, every run)
 
@@ -27,4 +28,4 @@ Read `data/job_leads.json`. If it doesn't exist or is empty, tell the person to 
 - Flag any banned-phrase or dash warnings printed during generation, per job, rather than only mentioning them if asked.
 - State where the report is (`output/job_report.html`) and how many CV/CL pairs were generated this run vs. total in the system.
 
-Remind the person that once they actually apply to one, they (or you, if they tell you) should mark it in `data/job_leads.json` by setting `"applied": true` on that entry so `/scrape` and `/apply` don't resurface it. Do not mark anything as applied yourself unless the person explicitly tells you they applied — this command only prepares materials, it never claims an application was sent.
+Remind the person that once they actually apply to one, they (or you, if they tell you) should mark it applied — either by running the server and clicking **Mark Applied**, or by setting `"applied": true` directly in `data/job_leads.json`. Do not mark anything as applied yourself unless the person explicitly tells you they applied — this command only prepares materials, it never claims an application was sent.

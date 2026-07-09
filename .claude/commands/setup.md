@@ -16,6 +16,21 @@ Each checkup must be phase-specific (see the exact content required inside each 
 
 ---
 
+## Phase 0 — Prior applications (context before you start configuring anything)
+
+Before touching the CV or any config, ask the person one thing: **"Do you already have a list of jobs you've applied to, or a job search history — even an informal one (a spreadsheet, a Notion page, a folder of saved postings, or just 'I've applied to these 5 companies')?"**
+
+If they have one:
+
+1. Ask them to paste or share it. Don't assume a format — a CSV export, a bullet list, screenshots described in words, whatever they have is fine.
+2. Read through it for patterns before Phase 1 even starts: which titles recur, which industries/company types show up, which locations, whether the roles cluster into distinct types (this often reveals a role-type split the person hasn't consciously named yet, which feeds directly into the CV variant question in Phase 1 and the search-profile question in Phase 2).
+3. Note anything surprising — e.g. they've been applying to both "Consultant" and "Data Analyst" roles, which suggests either two real search profiles or an unclear focus worth asking about directly.
+4. Carry these observations into Phase 1 and Phase 2 as a starting hypothesis ("it looks like you've mostly been targeting X and Y — is that still accurate, or has that changed?") rather than starting those interviews from a blank slate. A real application history is a much stronger signal than a person's own abstract description of what they want, the same way an actual CV beats a self-described skill list.
+
+If they don't have one, say that's completely fine and move straight to Phase 1 — this step exists to use real history when it's available, not to require one.
+
+---
+
 ## Phase 1 — CV parsing (mechanical, no interview needed)
 
 Ask the person to paste their CV as text, or point you at a file (PDF/DOCX/plain text) you can read. Do not ask them to manually re-type structured fields — extract everything yourself.
@@ -120,6 +135,7 @@ If `templates/smoke_test_jobs.json` doesn't exist, write 3-4 synthetic job posti
 
 Write `CUSTOMIZATION_REPORT.md` at the repo root. This should consolidate the checkups above into one persistent reference document (not be written fresh from scratch) covering:
 
+- What prior application history was reviewed in Phase 0, if any, and how it shaped the role-type split and search profiles
 - What CV variants you created and why (the role-type split from Phase 1), and which language each one is written in
 - The search profiles, preferred sources, locations, and watchlist companies configured, and how `/scrape` will actually query for them
 - Every disqualification/domain-gate/penalty rule you set up and the reasoning behind it

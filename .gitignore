@@ -7,6 +7,8 @@ cv_system/config_*.yaml
 !cv_system/config_policy.yaml
 data/job_leads.json
 data/job_leads_raw.json
+data/applications_archive.json
+data/scrape_warnings.json
 output/cv/*.html
 output/job_report.html
 CUSTOMIZATION_REPORT.md
